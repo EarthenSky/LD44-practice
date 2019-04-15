@@ -1,0 +1,2 @@
+-- this is a class
+-- this has the lookup tables

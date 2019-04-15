@@ -1,0 +1,1 @@
+-- this is a class that holds tile information.
