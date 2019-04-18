@@ -54,3 +54,11 @@ More Mechanics:
     .xxx......
     .xAx......
     .xxx......
+
+
+
+Sequencer deals with choosing which map to draw, etc.  The sequencer also chooses which info bubbles and story things to show.
+
+The sequencer hosts the Preparation Screen Module, which lets the user prepare for a match and make changes to the map's initialization information.  This period also lets love2d load the map info from disk.  
+
+The map class is different for every scene. It holds tile info and unit initialization information.

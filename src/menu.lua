@@ -1,11 +1,13 @@
 -- this controlls menu buttons and stuff.
-Menu = {}
+local Menu = {}
 
 
-Menu.draw = function () {
-}
+function Menu.draw ()
+    love.graphics.draw(menuImg, 16, 16)
+end
 
-Menu.update = function () {
-}
+function Menu.update ()
+
+end
 
 return Menu
