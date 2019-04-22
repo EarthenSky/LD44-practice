@@ -24,7 +24,8 @@ COLOUR_CB = (178, 220, 239)
 COLOUR_O = (235, 137, 49)
 COLOUR_Y = (247, 226, 107)
 COLOUR_R = (190, 38, 51)
-COLOUR_G = ()
+COLOUR_G = (68, 137, 26)
+COLOUR_LG = (163, 206, 39)
 
 # Starts and sets up pygame
 pygame.init()
@@ -38,13 +39,11 @@ delta_time = 0
 g_is_edit_mode = False
 g_update_menu_text = False
 
-#TODO: press E for edit mode: to change the map size. (after edit mode is closed, all past changes to map data are lost)
-#TODO: assign value to bar, then press tile to change it's value to it.
 # TODO: press control to copy the colour from a tile.
 # TODO: fix bug when size down.
 # TODO: make out and input tile maps.
 
-# Tile globals
+# Map globals
 g_map_size_x = 4
 g_map_size_y = 4
 g_tile_size = 16
@@ -53,7 +52,6 @@ g_map_pos_y = 16
 g_text_surface = FONT.render("size:{}, x:{}, y:{}".format(16, 4, 4), True, COLOUR_WHITE)
 
 g_menu_mode = "move"
-
 g_insert_string = "1"  # This string holds the info that gets drawn to the tiles.
 
 g_item_list = [["0" for x in range(0, g_map_size_x)] for y in range(0, g_map_size_y)] # -> [y][x]
@@ -104,20 +102,36 @@ g_key_down_pressed = False
 g_key_left_pressed = False
 g_key_right_pressed = False
 g_mb_down = False
+g_mouse_x = -1
+g_mouse_y = -1
 def handle_input():
     global game_stopped, g_map_size_x, g_map_size_y, g_tile_size, g_update_menu_text, \
             g_map_pos_x, g_map_pos_y, g_key_up_pressed, g_key_down_pressed, g_key_left_pressed, g_key_right_pressed, \
-            g_menu_mode, g_insert_string, g_mb_down, g_item_list
+            g_menu_mode, g_insert_string, g_mb_down, g_item_list, g_mouse_x, g_mouse_y
 
+    # This function draws the insert text the tile under the mouse.
     def draw_insert():
         # Map realtive positions
-        grid_xpos = event.pos[0] - g_map_pos_x
-        grid_ypos = event.pos[1] - g_map_pos_y
+        grid_xpos = g_mouse_x - g_map_pos_x
+        grid_ypos = g_mouse_y - g_map_pos_y
+
         # Map indexes
         ix = max(0, min(g_map_size_x-1, math.floor(grid_xpos / (g_tile_size+1))))  # max&min -> clamp
         iy = max(0, min(g_map_size_y-1, math.floor(grid_ypos / (g_tile_size+1))))
 
         g_item_list[iy][ix] = g_insert_string
+
+    # This function gets the sting value at a certain tile.
+    def get_tile_value():
+        # Map realtive positions
+        grid_xpos = g_mouse_x - g_map_pos_x
+        grid_ypos = g_mouse_y - g_map_pos_y
+
+        # Map indexes
+        ix = max(0, min(g_map_size_x-1, math.floor(grid_xpos / (g_tile_size+1))))  # max&min -> clamp
+        iy = max(0, min(g_map_size_y-1, math.floor(grid_ypos / (g_tile_size+1))))
+
+        return g_item_list[iy][ix]
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -126,12 +140,15 @@ def handle_input():
             if event.key == pygame.K_ESCAPE: # exit all modes
                 g_update_menu_text = True
                 g_menu_mode = "move"
+            elif event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL: # Copy colour
+                g_insert_string = get_tile_value()
             elif g_menu_mode == "insert":
                 if event.key == pygame.K_BACKSPACE:
                     if len(g_insert_string) >= 1:
                         g_insert_string = g_insert_string[0:-1]
                 else:
                     g_insert_string += event.unicode # TODO: test that this works ok?
+            #elif event.key == pygame.K_l: # Change through layers
             elif event.key == pygame.K_e: # Menu control
                 g_update_menu_text = True
                 if g_menu_mode == "edit":
@@ -195,6 +212,8 @@ def handle_input():
         elif event.type == pygame.MOUSEBUTTONUP:
             g_mb_down = False
         elif event.type == pygame.MOUSEMOTION:
+            g_mouse_x = event.pos[0]
+            g_mouse_y = event.pos[1]
             if g_mb_down == True: # Check if mouse is inside a box while button is down
                 draw_insert()
 
@@ -219,14 +238,18 @@ def cut_colour_code(string):
         save_string = ""
         for ch in string:
             if state == "save" and ch == '~':
-                colour = (-1,-1,-1)
-                if save_string == "white": colour = COLOUR_WHITE
-                elif save_string == "red": colour = COLOUR_R
-                elif save_string == "blue": colour = COLOUR_SEB
-                elif save_string == "yellow": colour = COLOUR_Y
-                elif save_string == "orange": colour = COLOUR_O
-                elif save_string == "green": colour = COLOUR_G
-                return (string.replace('~{}~'.format(save_string),''),colour)
+                colour = COLOUR_BLACK
+                ss = save_string.lower()
+                if ss == "white": colour = COLOUR_WHITE
+                elif ss == "grey" or ss == "gray": colour = COLOUR_GRAY
+                elif ss == "red": colour = COLOUR_R
+                elif ss == "blue": colour = COLOUR_SEB
+                elif ss == "yellow": colour = COLOUR_Y
+                elif ss == "orange": colour = COLOUR_O
+                elif ss == "green": colour = COLOUR_G
+                elif ss == "lg": colour = COLOUR_LG
+                elif ss == "cb": colour = COLOUR_CB
+                return (string.replace('~{}~'.format(save_string),''), colour)
             elif state == "main" and ch == '~':
                 state = "save"
             elif state == "save":
@@ -249,7 +272,7 @@ def draw_tiles():
             DISPLAY_SURFACE.blit( ts, (xpos, ypos) )
 
 # This function draws the menu bar and all its info
-MENU_BAR_HEIGHT = 32
+MENU_BAR_HEIGHT = 64
 g_ts = FONT.render("Mode: move", True, COLOUR_CB)
 def draw_menu_bar():
     global g_update_menu_text, g_ts
