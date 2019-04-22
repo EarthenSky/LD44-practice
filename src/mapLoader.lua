@@ -2,7 +2,7 @@
 
 MapLoader = {}
 
---This is a lookup table for finding maps by their name.
+--This is a lookup table for finding maps by their name.  --TODO: I dont think i need this anymore, i can just have them all iun the same directory and then that works just fine...
 local mapLookup = {
     ["test-map"] = "maps/test.mp"
 }
